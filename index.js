@@ -11,6 +11,8 @@ const PORT = 8889;
 const PORT2 = 8890;
 const PORT3 = 11111;
 const HOST = '192.168.10.1';
+const cp = require('child_process');
+let ls = null;
 
 const drone = dgram.createSocket('udp4');
 drone.bind(PORT);
@@ -38,6 +40,14 @@ drone.on('message', message => {
 io.on('connection', socket => {
     socket.on('command', command => {
         drone.send(command, 0, command.length, PORT, HOST, handleError);
+    })
+    socket.on('streamOn', command => {
+        drone.send(command, 0, command.length, PORT, HOST, handleError);
+        ls = cp.spawn('ffplay', ['-fflags', 'nobuffer', '-x', '640', '-y', '480', 'udp://192.168.10.1:11111']);
+    })
+    socket.on('streamOff', command => {
+        drone.send(command, 0, command.length, PORT, HOST, handleError);
+        ls.kill();
     })
     socket.emit('status', 'CONNECTED');
 });
